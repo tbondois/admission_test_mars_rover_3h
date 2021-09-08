@@ -31,15 +31,15 @@ curl -X POST http://127.0.0.1:8000/explore -H "Content-Type: application/json" -
     "plateau": "9 9",
     "rovers": [
         {
-            "position": "1 1 N",
-            "moveset": "MMMLMM"
+            "position": "0 0 N",
+            "moveset": "MMMRMM"
         },
         {
-            "position": "7 7",
-            "moveset": "MMMRMML"
+            "position": "7 7 S",
+            "moveset": "RRMMRMML"
         },
         {
-            "position": "7 7",
+            "position": "4 4 E",
             "moveset": "MMRMMLMMM"
         }
     ]
