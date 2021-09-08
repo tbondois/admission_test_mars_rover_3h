@@ -16,6 +16,7 @@ UTILISATION
 -----------------
 
 ```
+composer install
 symfony server:start --no-tls --port=8000 -d
 ```
 
