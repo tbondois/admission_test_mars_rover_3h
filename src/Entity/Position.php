@@ -9,7 +9,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * TODO : Asserts
  * @ORM\Entity(repositoryClass=PositionRepository::class)
  */
 class Position
@@ -54,7 +53,7 @@ class Position
 
     public function __toString(): string
     {
-        return "{$this->x} {$this->y} {$this->orientation}";
+        return trim(sprintf("%d %d %s", $this->x, $this->y,$this->orientation));
     }
 
     public function getId(): ?int
@@ -62,7 +61,7 @@ class Position
         return $this->id;
     }
 
-    public function getX(): ?int
+    public function getX(): int
     {
         return $this->x;
     }
@@ -82,7 +81,7 @@ class Position
         return $this;
     }
 
-    public function getY(): ?int
+    public function getY(): int
     {
         return $this->y;
     }
