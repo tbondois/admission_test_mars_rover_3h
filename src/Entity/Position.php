@@ -5,46 +5,31 @@ namespace App\Entity;
 use App\Repository\PositionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass=PositionRepository::class)
- */
 class Position
 {
     /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
+     * @Assert\NotNull
+     * @Assert\PositiveOrZero
      */
-    private $id;
+    private int $x;
 
     /**
      * @Assert\NotNull
      * @Assert\PositiveOrZero
-     * @ORM\Column(type="integer")
      */
-    private $x;
-
-    /**
-     * @Assert\NotNull
-     * @Assert\PositiveOrZero
-     * @ORM\Column(type="integer")
-     */
-    private $y;
+    private int $y;
 
     /**
      * @Assert\Choice({"N", "W", "S", "E", null})
-     * @ORM\Column(type="string", length=1, nullable=true)
      */
-    private $orientation;
+    private ?string $orientation;
 
     /**
      * @var ArrayCollection|Rover[]
-     * @ORM\OneToMany(targetEntity=Rover::class, mappedBy="position")
      */
-    private $rovers;
+    private iterable $rovers;
 
     public function __construct()
     {
@@ -56,10 +41,6 @@ class Position
         return trim(sprintf("%d %d %s", $this->x, $this->y,$this->orientation));
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
     public function getX(): int
     {
