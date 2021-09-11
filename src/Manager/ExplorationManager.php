@@ -3,7 +3,6 @@
 
 namespace App\Manager;
 
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -11,9 +10,8 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 use App\Entity\Rover;
 use App\Entity\Position;
 use App\Entity\Plateau;
-use function PHPUnit\Framework\throwException;
 
-class ExplorationManager implements ExplorationManagerInterface
+class ExplorationManager
 {
     /**
      * @var SerializerInterface
@@ -35,10 +33,10 @@ class ExplorationManager implements ExplorationManagerInterface
      */
     private $roverMovementManager;
 
-    public function __construct(SerializerInterface $serializer,
-                                ValidatorInterface $validator,
+    public function __construct(SerializerInterface    $serializer,
+                                ValidatorInterface     $validator,
                                 EntityManagerInterface $entityManager,
-                                RoverMovementManager $roverMovementManager
+                                RoverMovementManager   $roverMovementManager
     ) {
         $this->serializer = $serializer;
         $this->validator = $validator;
@@ -46,22 +44,38 @@ class ExplorationManager implements ExplorationManagerInterface
         $this->roverMovementManager = $roverMovementManager;
     }
 
-
-    public function sendInstructions($jsonInput): JsonResponse
+    public function normalizeInput(string $input): iterable
     {
-        $outputs = [];
+        $normalizedInputData = [];
+        $rows = explode(PHP_EOL, $input);
+        $normalizedInputData["plateau"] = trim(array_shift($rows));
+        $normalizedInputData["rovers"] = [];
+        $roverId = 1;
+        foreach ($rows as $number => $row) {
+            if ($number % 2 === 0) {
+                $normalizedInputData["rovers"][$roverId]["position"] = trim($row);
+            } else {
+                $normalizedInputData["rovers"][$roverId]["moveset"] = trim($row);
+                $roverId++;
+            }
+        }
+        return $normalizedInputData;
+    }
 
-        $arrayInput = $this->serializer->decode($jsonInput, "json");
-        if (!isset($arrayInput["plateau"])) {
+    public function sendInstructions($normalizedInputData): iterable
+    {
+        $roverEndingPositions = [];
+
+        if (!isset($normalizedInputData["plateau"])) {
             throw new \Exception("Plateau information required");
         }
 
-        $plateau = $this->createPlateau($arrayInput["plateau"]);
+        $plateau = $this->createPlateau($normalizedInputData["plateau"]);
 
         $rovers = [];
-        if (isset($arrayInput["rovers"])) {
-            foreach ($arrayInput["rovers"] as $roverNumber => $arrayInputRover) {
-                $rovers[] = $this->createRover($arrayInputRover["position"], $arrayInputRover["moveset"], $roverNumber);
+        if (isset($normalizedInputData["rovers"])) {
+            foreach ($normalizedInputData["rovers"] as $arrayInputRover) {
+                $rovers[] = $this->createRover($arrayInputRover["position"], $arrayInputRover["moveset"]);
             }
         }
 
@@ -79,22 +93,12 @@ class ExplorationManager implements ExplorationManagerInterface
                 $this->roverMovementManager->controlRover($rover, $direction, $plateau);
             }
 
-            $outputs[] = $rover->getPosition()->getX()
-                . " "
-                . $rover->getPosition()->getY()
-                . " "
-                . $rover->getPosition()->getOrientation()
-            ;
-
+            $roverEndingPositions[] = (string)$rover->getPosition();
         }
+        //$this->entityManager->flush();
 
-        return new JsonResponse(
-            $this->serializer->normalize($outputs, "json"),
-            201,
-        );
+        return $roverEndingPositions;
     }
-
-
 
 
     private function createPlateau(string $strPosition)
@@ -103,18 +107,23 @@ class ExplorationManager implements ExplorationManagerInterface
         $position = $this->createPosition($strPosition);
         $plateau = new Plateau();
         $plateau->setMaxPosition($position);
+
+        $this->validate($plateau);
         //$this->entityManager->persist($plateau);
+
         return $plateau;
     }
 
-    private function createRover(string $strPosition, string $moveset, int $roverNumber)
+    private function createRover(string $strPosition, string $moveset)
     {
         $rover = new Rover();
         $position = $this->createPosition($strPosition);
         $rover->setPosition($position);
         $rover->setMoveset($moveset);
-        $rover->setId($roverNumber);
+
+        $this->validate($rover);
         //$this->entityManager->persist($rover);
+
         return $rover;
     }
 
@@ -129,14 +138,13 @@ class ExplorationManager implements ExplorationManagerInterface
         $position = new Position();
         $position->setX($params[0]);
         $position->setY($params[1]);
-
-
-        $this->validate($position);
-
         if (isset($params[2])) {
             $position->setOrientation($params[2]);
         }
+
+        $this->validate($position);
         //$this->entityManager->persist($position);
+
         return $position;
     }
 
@@ -149,7 +157,7 @@ class ExplorationManager implements ExplorationManagerInterface
         /** @var ConstraintViolationListInterface $violationList */
         $violationList = $this->validator->validate($entity);
         if (count($violationList)) {
-            throw new \Exception("Violation(s) on ". get_class($entity)." validation : ".implode(" | ", $violationList));
+            throw new \Exception("Violation(s) on ".get_class($entity)." validation : ".implode(" | ", $violationList));
         }
     }
 

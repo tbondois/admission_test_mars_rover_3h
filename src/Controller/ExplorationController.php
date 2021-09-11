@@ -19,9 +19,13 @@ class ExplorationController extends AbstractController
     /**
      * @Route("/explore", methods="POST", name="exploration_post")
      */
-    public function post(Request $request, ExplorationManager $explorationManager): JsonResponse
+    public function post(Request $request, ExplorationManager $explorationManager): Response
     {
-        return $explorationManager->sendInstructions($request->getContent());
+        $normalizedInputData = $explorationManager->normalizeInput($request->getContent());
+
+        $roverEndingPositions = $explorationManager->sendInstructions($normalizedInputData);
+
+        return new Response(implode(PHP_EOL, $roverEndingPositions));
     }
 
 

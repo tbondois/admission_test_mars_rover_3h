@@ -3,51 +3,28 @@
 namespace App\Entity;
 
 use App\Repository\RoverRepository;
-use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * TODO : Asserts
- * @ORM\Entity(repositoryClass=RoverRepository::class)
- */
 class Rover
 {
     /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     */
-    private $id;
-
-    /**
-     * @var ?Position
+     * @var Position
      * @Assert\NotNull
-     * @ORM\ManyToOne(targetEntity=Position::class, inversedBy="rovers")
      */
     private $position;
 
     /**
      * @Assert\NotBlank
-     * @ORM\Column(type="string", length=500)
      */
-    private $moveset;
+    private string $moveset;
 
 
     public function __toString(): string
     {
-        return "Rover #{$this->id} at {$this->getPosition()}";
+        return "Rover {$this->id} at position {$this->getPosition()}";
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function setId(int $id): ?int
-    {
-        return $this->id = $id;
-    }
-
-    public function getPosition(): ?Position
+    public function getPosition(): Position
     {
         return $this->position;
     }
@@ -59,7 +36,7 @@ class Rover
         return $this;
     }
 
-    public function getMoveset(): ?string
+    public function getMoveset(): string
     {
         return $this->moveset;
     }
@@ -71,5 +48,4 @@ class Rover
         return $this;
     }
 
-    
 }
