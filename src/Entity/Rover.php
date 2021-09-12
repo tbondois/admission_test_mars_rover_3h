@@ -1,53 +1,77 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
-use App\Repository\RoverRepository;
+use App\Enum\OrientationEnum;
+use App\ValueObject\Position;
+use App\ValueObject\Orientation;
+use App\ValueObject\InstructionSet;
+use App\Entity\Rover\MoveableInterface;
+use App\Entity\Rover\RotatableInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * TODO : Asserts
- * @ORM\Entity(repositoryClass=RoverRepository::class)
+ * @ORM\Entity
  */
-class Rover
+class Rover implements MoveableInterface, RotatableInterface
 {
     /**
      * @ORM\Id
+     * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    private $id;
+    private ?int $id;
 
     /**
-     * @var ?Position
-     * @Assert\NotNull
-     * @ORM\ManyToOne(targetEntity=Position::class, inversedBy="rovers")
+     * @ORM\Column(type="integer")
      */
-    private $position;
+    private int $number;
+
+    /**
+     * @Assert\NotNull
+     * @ORM\Embedded(class="App\ValueObject\Position")
+     */
+    private Position $position;
 
     /**
      * @Assert\NotBlank
-     * @ORM\Column(type="string", length=500)
+     * @ORM\Embedded(class="App\ValueObject\Orientation")
      */
-    private $moveset;
+    private Orientation $orientation;
 
+    /**
+     * @ORM\Embedded(class="InstructionSet")
+     */
+    private InstructionSet $instructionSet;
+
+    public function __construct(int $number, Position $position, Orientation $orientation, InstructionSet $instructions)
+    {
+        $this->number = $number;
+        $this->position = $position;
+        $this->orientation = $orientation;
+        $this->instructionSet = $instructions;
+    }
 
     public function __toString(): string
     {
-        return "Rover #{$this->id} at {$this->getPosition()}";
+        return sprintf("Rover #%d at %s", $this->number, $this->serialize());
     }
 
-    public function getId(): ?int
+    public function serialize(): string
     {
-        return $this->id;
+        return sprintf("%s %s", $this->position->serialize(), $this->orientation->serialize());
     }
 
-    public function setId(int $id): ?int
+    public function getNumber(): int
     {
-        return $this->id = $id;
+        return $this->number;
     }
 
-    public function getPosition(): ?Position
+    public function getPosition(): Position
     {
         return $this->position;
     }
@@ -59,17 +83,87 @@ class Rover
         return $this;
     }
 
-    public function getMoveset(): ?string
+    public function getOrientation(): Orientation
     {
-        return $this->moveset;
+        return $this->orientation;
     }
 
-    public function setMoveset(string $moveset): self
+    public function getOrientationCardinalPoint(): string
     {
-        $this->moveset = trim(str_replace(' ', '', $moveset));
+        return $this->orientation->getCardinalPoint();
+    }
 
+    /**
+     * Getter of instructions
+     */
+    public function getInstructionSet(): InstructionSet
+    {
+        return $this->instructionSet;
+    }
+
+    public function getInstructions(): ArrayCollection
+    {
+        return $this->instructionSet->getInstructions();
+    }
+
+    public function moveNorth(Plateau $plateau): self
+    {
+        if ($this->getPosition()->getY() >= $plateau->getMaxY()) {
+            throw new \RangeException("unable move north outside of plateau for $this");
+        }
+        $this->position->addY();
         return $this;
     }
 
-    
+    public function moveSouth(Plateau $plateau): self
+    {
+        if ($this->getPosition()->getY() <= 0) {
+            throw new \RangeException("unablemove south outside of plateau for $this");
+        }
+        $this->position->addY(-1);
+        return $this;
+    }
+
+    public function moveWest(Plateau $plateau): self
+    {
+        if ($this->getPosition()->getX() <= 0) {
+            throw new \RangeException("unable to move west outside of plateau for $this");
+        }
+        $this->position->addX(-1);
+        return $this;
+    }
+
+    public function moveEast(Plateau $plateau): self
+    {
+        if ($this->getPosition()->getX() >= $plateau->getMaxX()) {
+            throw new \RangeException("unable to move east outside of plateau for $this");
+        }
+        $this->position->addX(1);
+        return $this;
+    }
+
+    public function orientNorth(): self
+    {
+        $this->orientation->setCardinalPoint(OrientationEnum::CARDINALPOINT_VALUE_NORTH);
+        return $this;
+    }
+
+    public function orientSouth(): self
+    {
+        $this->orientation->setCardinalPoint(OrientationEnum::CARDINALPOINT_VALUE_SOUTH);
+        return $this;
+    }
+
+    public function orientEast(): self
+    {
+        $this->orientation->setCardinalPoint(OrientationEnum::CARDINALPOINT_VALUE_EAST);
+        return $this;
+    }
+
+    public function orientWest(): self
+    {
+        $this->orientation->setCardinalPoint(OrientationEnum::CARDINALPOINT_VALUE_WEST);
+        return $this;
+    }
+
 }
