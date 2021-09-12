@@ -1,9 +1,25 @@
-ADMISSION TEST
+ADMISSION TEST : MARS ROVER
 =================
 
+  - [INSTRUCTIONS](#instructions)
+    - [Time limit](#time-limit)
+    - [Overview](#overview)
+    - [Notes:](#notes)
+    - [Specification](#specification)
+      - [Input:](#input)
+      - [Output:](#output)
+    - [Example](#example)
+  - [PREREQUISITES](#prerequisites)
+  - [INSTALLATION](#installation)
+  - [USAGE](#usage)
+  
 
 INSTRUCTIONS
 -----------------
+
+### Time limit
+
+3 hours.
 
 ### Overview
 
@@ -74,17 +90,24 @@ Test output:
 
 PREREQUISITES
 -----------------
+- PHP >= 7.4
+- `symfony` binary ([Download and Install](https://symfony.com/download))
+- `composer` binary ([Download and Install](https://getcomposer.org/download/))
 
-- PHP >= 7.4 (devrait fonctionner avec PHP 8)
+
+INSTALLATION
+-----------------
+Execute theses command in a shell terminal :
+```
+composer install
+symfony serve -d --no-tls --port=8000
+```
+
+Local HTTP server should be reachable at http://127.0.0.1:8000
 
 
 USAGE
 -----------------
-
-```
-composer install
-symfony server:start --no-tls --port=8000 -d
-```
 
 Instructions have to be sent in Json format in HTTP POST, through POSTMAN or Curl :
 
@@ -114,9 +137,3 @@ It should return :
 9 9 N
 9 2 E
 ```
-
-
-NOTES
------------------
-
-
